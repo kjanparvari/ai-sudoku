@@ -156,6 +156,33 @@ class Table:
                     return False
         return True
 
+    def degree(self, _row: int, _col: int) -> int:
+        degree: int = 0
+        _cell: Cell = self.cell(_row, _col)
+        if not _cell.has_value():
+            for __row in range(0, self.length):
+                if self.cell(__row, _col).has_value() and _row != __row:
+                    degree += 1
+            for __col in range(0, self.length):
+                if self.cell(_row, __col).has_value() and _col != __col:
+                    degree += 1
+
+        if not _cell.has_color():
+            if _row - 1 >= 0:
+                if self.cell(_row - 1, _col).has_color():
+                    degree += 1
+            if _row + 1 < self.length:
+                if self.cell(_row + 1, _col).has_color():
+                    degree += 1
+            if _col - 1 >= 0:
+                if self.cell(_row, _col - 1).has_color():
+                    degree += 1
+            if _col + 1 < self.length:
+                if self.cell(_row, _col + 1).has_color():
+                    degree += 1
+
+        return degree
+
     @staticmethod
     def set_constraint_from_color(_cell: Cell, _neighbour: Cell):
         if not _neighbour.has_color():
@@ -308,11 +335,11 @@ class Table:
 
 class Assignment:
 
-    def __init__(self, _type: str, _value: str or int, _row: int, _col: int, mrv: int = 0):
+    def __init__(self, _type: str, _value: str or int, _row: int, _column: int, mrv: int = 0):
         self._type: str = _type
         self._value: str or int = _value
         self._row = _row
-        self._col = _col
+        self._column = _column
         self._mrv = mrv
 
     @property
@@ -328,8 +355,8 @@ class Assignment:
         return self._row
 
     @property
-    def col(self) -> int:
-        return self._col
+    def column(self) -> int:
+        return self._column
 
     @property
     def mrv(self) -> int:
@@ -341,9 +368,9 @@ class Node:
     def __init__(self, parent_table: Table, assignment: Assignment):
         self._table: Table = parent_table.copy()
         if assignment.type == "value":
-            self._table.cell(assignment.row, assignment.col).value = assignment.value
+            self._table.cell(assignment.row, assignment.column).value = assignment.value
         elif assignment.type == "color":
-            self._table.cell(assignment.row, assignment.col).color = assignment.value
+            self._table.cell(assignment.row, assignment.column).color = assignment.value
         elif assignment.type == "none":
             pass
 
@@ -378,6 +405,9 @@ class Node:
             for j in range(i, len(lst)):
                 if lst[i].mrv > lst[j].mrv:
                     lst[i], lst[j] = lst[j], lst[i]
+                if lst[i].mrv == lst[j].mrv:
+                    if self.table.degree(lst[i].row, lst[j].column) < self.table.degree(lst[j].row, lst[j].column):
+                        lst[i], lst[j] = lst[j], lst[i]
         return lst
 
     def print_permitted(self):
